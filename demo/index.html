@@ -1,0 +1,102 @@
+<!-- Created by Erion Nezha — © 2026 All rights reserved -->
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Klasifikimi i të Ardhurave (ML) — Erion Nezha</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,'Segoe UI',sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:24px 14px}
+.wrap{width:100%;max-width:640px}
+h1{font-size:1.5rem;text-align:center;margin-bottom:6px}
+.sub{text-align:center;color:#94a3b8;font-size:.9rem;margin-bottom:14px}
+.sim-badge{display:inline-block;background:#f59e0b22;border:1px solid #f59e0b88;color:#fbbf24;font-size:.75rem;padding:4px 12px;border-radius:20px;margin-bottom:14px}
+.center{text-align:center}
+.card{background:#1e293b;border:1px solid #334155;border-radius:14px;padding:20px;margin-bottom:16px}
+label{display:block;font-size:.85rem;color:#94a3b8;margin:12px 0 6px}
+input[type=number],select{width:100%;padding:10px 12px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#e2e8f0;font-size:.95rem}
+input[type=range]{width:100%}
+.val{color:#7fdbff;font-weight:700}
+button{width:100%;padding:13px;border:none;border-radius:10px;background:linear-gradient(135deg,#00d4ff,#0077ff);color:#04121a;font-weight:700;font-size:1rem;cursor:pointer;margin-top:16px}
+button:hover{filter:brightness(1.1)}
+#result{display:none;margin-top:6px}
+.gauge{height:14px;background:#0f172a;border-radius:8px;overflow:hidden;margin:12px 0}
+.gauge>div{height:100%;width:0;transition:width .8s;background:linear-gradient(90deg,#f59e0b,#22c55e)}
+.verdict{font-size:1.25rem;font-weight:800;text-align:center;margin:8px 0}
+.factors{font-size:.86rem;color:#94a3b8;line-height:1.8;margin-top:10px}
+.factors b{color:#e2e8f0}
+.note{font-size:.8rem;color:#64748b;line-height:1.6;margin-top:12px}
+footer{margin-top:20px;color:#64748b;font-size:.82rem;text-align:center}
+footer strong{color:#94a3b8}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="center"><span class="sim-badge">🧪 SIMULIM EDUKATIV — jo modeli i vërtetë i trajnuar</span></div>
+  <h1>💰 Parashikimi i të Ardhurave</h1>
+  <p class="sub">Bazuar në datasetin <i>Adult Census Income</i>: a fiton një person <b>mbi 50K$/vit</b>? Plotëso të dhënat dhe shiko "parashikimin".</p>
+  <div class="card">
+    <label>Mosha</label>
+    <input type="number" id="age" value="35" min="17" max="90">
+    <label>Arsimi</label>
+    <select id="edu">
+      <option value="0">Fillor / 8-vjeçar</option>
+      <option value="1">I mesëm</option>
+      <option value="2" selected>Universitet (Bachelor)</option>
+      <option value="3">Master / Doktoraturë</option>
+    </select>
+    <label>Profesioni</label>
+    <select id="occ">
+      <option value="0">Shërbime / Punë krahu</option>
+      <option value="1" selected>Zyrë / Administratë</option>
+      <option value="2">Teknik / Specialist</option>
+      <option value="3">Menaxher / Drejtues</option>
+    </select>
+    <label>Orë pune në javë: <span class="val" id="hrsVal">40</span></label>
+    <input type="range" id="hrs" min="1" max="80" value="40">
+    <label>Fitimi nga kapitali ($/vit)</label>
+    <input type="number" id="cap" value="0" min="0">
+    <button onclick="predict()">🔮 Parashiko</button>
+  </div>
+  <div class="card" id="result">
+    <div class="verdict" id="verdict"></div>
+    <div class="gauge"><div id="bar"></div></div>
+    <div style="text-align:center;font-size:.9rem" id="prob"></div>
+    <div class="factors" id="factors"></div>
+    <p class="note">ℹ️ Ky është një <b>simulim i thjeshtuar edukativ</b> me pesha të përcaktuara manualisht, për të ilustruar konceptin e klasifikimit binar. Notebook-u origjinal (<i>Untitled.ipynb</i>) trajnon një <b>Logistic Regression</b> të vërtetë mbi ~48,000 rreshta të datasetit <i>income_evaluation.csv</i> — shiko dosjen <i>original/</i> dhe tabin "Kodi Burim".</p>
+  </div>
+</div>
+<footer>Krijuar nga <strong>Erion Nezha</strong> — © 2026</footer>
+<script>
+document.getElementById('hrs').addEventListener('input',e=>{document.getElementById('hrsVal').textContent=e.target.value;});
+function sigmoid(x){return 1/(1+Math.exp(-x));}
+function predict(){
+  const age=+document.getElementById('age').value,
+        edu=+document.getElementById('edu').value,
+        occ=+document.getElementById('occ').value,
+        hrs=+document.getElementById('hrs').value,
+        cap=+document.getElementById('cap').value;
+  const parts=[
+    {n:'Mosha',w:(age-35)*0.02},
+    {n:'Arsimi',w:(edu-1)*0.55},
+    {n:'Profesioni',w:(occ-1)*0.35},
+    {n:'Orët/javë',w:(hrs-40)*0.015},
+    {n:'Fitimi nga kapitali',w:Math.min(cap/20000,1)*0.8}
+  ];
+  const z=parts.reduce((a,p)=>a+p.w,0)-0.35;
+  const p=sigmoid(z);
+  const pct=Math.round(p*100);
+  document.getElementById('result').style.display='block';
+  const v=document.getElementById('verdict');
+  if(p>=0.5){v.textContent='✅ MBI 50K $/vit';v.style.color='#22c55e';}
+  else{v.textContent='❌ NËN OSE 50K $/vit';v.style.color='#f59e0b';}
+  setTimeout(()=>{document.getElementById('bar').style.width=pct+'%';},50);
+  document.getElementById('prob').textContent='Probabiliteti: '+pct+'%';
+  const sorted=[...parts].sort((a,b)=>Math.abs(b.w)-Math.abs(a.w)).slice(0,3);
+  document.getElementById('factors').innerHTML='<b>Faktorët kryesorë:</b><br>'+sorted.map(f=>`• ${f.n}: <b>${f.w>=0?'+':''}${f.w.toFixed(2)}</b>`).join('<br>');
+  document.getElementById('result').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+</script>
+</body>
+</html>
